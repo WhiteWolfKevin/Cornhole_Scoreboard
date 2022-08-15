@@ -18,12 +18,19 @@ team_b_plus_button_last = time.ticks_ms()
 team_b_minus_button_last = time.ticks_ms()
 clear_button_last = time.ticks_ms()
 
+# Button timeouts in milliseconds
+button_press_timeout = 200
+button_hold_timeout = 1500
+clear_screen_timeout = 2000
+
+# Team Class
 class Team():
     def __init__(self, name, scoreboard, brightness, score):
         self.name = name
         self.scoreboard = scoreboard
         self.brightness = brightness
         self.score = score
+        self.previous_score = -1
     
     def set_brightness(self):
         self.scoreboard.brightness(self.brightness)
@@ -33,8 +40,8 @@ class Team():
             self.brightness += 1
             self.set_brightness()
             
-            print("file to open: " + "Team_" + self.name + "_Brightness.txt")
-            f = open("Team_" + self.name + "_Brightness.txt", 'w')
+            # Write the brightness level to a text file to save between shutdowns
+            f = open("team_" + self.name + "_brightness.txt", 'w')
             f.write(str(self.brightness))
             f.close()
         
@@ -43,13 +50,16 @@ class Team():
             self.brightness -= 1
             self.set_brightness()
             
-            print("file to open: " + "Team_" + self.name + "_Brightness.txt")
-            f = open("Team_" + self.name + "_Brightness.txt", 'w')
+            # Write the brightness level to a text file to save between shutdowns
+            f = open("team_" + self.name + "_brightness.txt", 'w')
             f.write(str(self.brightness))
             f.close()
         
     def display_score(self):
-        self.scoreboard.number(self.score)
+        
+        if (self.score != self.previous_score):
+            self.scoreboard.number(self.score)
+            self.previous_score = self.score
         
     def increase_score(self):
         if (self.score < 9999):
@@ -76,12 +86,12 @@ def button_handler(pin):
     if pin is team_a_plus_button:
         team_a_plus_button_start_time = time.ticks_ms()
         
-        if (time.ticks_diff(time.ticks_ms(), team_a_plus_button_last) > 150):
+        if (time.ticks_diff(time.ticks_ms(), team_a_plus_button_last) > button_press_timeout):
             team_a.increase_score()
                 
             while (team_a_plus_button.value()):
                 print("team_a_plus_button is being held " + str(time.ticks_ms()))
-                if (time.ticks_diff(time.ticks_ms(), team_a_plus_button_start_time) > 2000):
+                if (time.ticks_diff(time.ticks_ms(), team_a_plus_button_start_time) > button_hold_timeout):
                     team_a.increase_score()
 
                 team_a.display_score()
@@ -92,12 +102,12 @@ def button_handler(pin):
     elif pin is team_a_minus_button:    
         team_a_minus_button_start_time = time.ticks_ms()
         
-        if (time.ticks_diff(time.ticks_ms(), team_a_minus_button_last) > 150):
+        if (time.ticks_diff(time.ticks_ms(), team_a_minus_button_last) > button_press_timeout):
             team_a.decrease_score()
                 
             while (team_a_minus_button.value()):
                 print("team_a_minus_button is being held " + str(time.ticks_ms()))
-                if (time.ticks_diff(time.ticks_ms(), team_a_minus_button_start_time) > 2000):
+                if (time.ticks_diff(time.ticks_ms(), team_a_minus_button_start_time) > button_hold_timeout):
                     team_a.decrease_score()
 
                 team_a.display_score()
@@ -108,12 +118,11 @@ def button_handler(pin):
     elif pin is team_b_plus_button:
         team_b_plus_button_start_time = time.ticks_ms()
         
-        if (time.ticks_diff(time.ticks_ms(), team_b_plus_button_last) > 150):
+        if (time.ticks_diff(time.ticks_ms(), team_b_plus_button_last) > button_press_timeout):
             team_b.increase_score()
                 
             while (team_b_plus_button.value()):
-                print("team_b_plus_button is being held " + str(time.ticks_ms()))
-                if (time.ticks_diff(time.ticks_ms(), team_b_plus_button_start_time) > 2000):
+                if (time.ticks_diff(time.ticks_ms(), team_b_plus_button_start_time) > button_hold_timeout):
                     team_b.increase_score()
 
                 team_b.display_score()
@@ -124,12 +133,11 @@ def button_handler(pin):
     elif pin is team_b_minus_button:
         team_b_minus_button_start_time = time.ticks_ms()
         
-        if (time.ticks_diff(time.ticks_ms(), team_b_minus_button_last) > 150):
+        if (time.ticks_diff(time.ticks_ms(), team_b_minus_button_last) > button_press_timeout):
             team_b.decrease_score()
                 
             while (team_b_minus_button.value()):
-                print("team_b_minus_button is being held " + str(time.ticks_ms()))
-                if (time.ticks_diff(time.ticks_ms(), team_b_minus_button_start_time) > 2000):
+                if (time.ticks_diff(time.ticks_ms(), team_b_minus_button_start_time) > button_hold_timeout):
                     team_b.decrease_score()
 
                 team_b.display_score()
@@ -141,10 +149,11 @@ def button_handler(pin):
         clear_button_start_time = time.ticks_ms()
           
         while (clear_button.value()):
-            if (time.ticks_diff(time.ticks_ms(), clear_button_start_time) > 2000):
+            if (time.ticks_diff(time.ticks_ms(), clear_button_start_time) > clear_screen_timeout):
                 team_a.score = 0
                 team_b.score = 0
                 
+                # After clearing, modify the brightness with button presses
                 if (team_a_plus_button.value()):
                     team_a.increase_brightness()
                     time.sleep(0.2)
@@ -160,31 +169,22 @@ def button_handler(pin):
                 elif (team_b_minus_button.value()):
                     team_b.decrease_brightness()
                     time.sleep(0.2)
-                    
-            f = open('Team_A_Brightness.txt')
-            print("Team_A_Brightness.txt = " + f.read())
-            f.close()
-            f = open('Team_B_Brightness.txt')
-            print("Team_B_Brightness.txt = " + f.read())
-            f.close()
-            
+
             team_a.display_score()
             team_b.display_score()
 
-
 # Get Brightness for Displays from .txt files
-f = open('Team_A_Brightness.txt')
-Team_A_Brightness = f.read()
+f = open('team_a_brightness.txt')
+team_a_brightness = int(f.read())
 f.close()
 
-f = open('Team_B_Brightness.txt')
-Team_B_Brightness = f.read()
+f = open('team_b_brightness.txt')
+team_b_brightness = int(f.read())
 f.close()
-
 
 # Create Team objects
-team_a = Team("A", (tm1637.TM1637(clk=Pin(15), dio=Pin(14))), int(Team_A_Brightness), 0)
-team_b = Team("B", (tm1637.TM1637(clk=Pin(16), dio=Pin(17))), int(Team_B_Brightness), 0)
+team_a = Team("a", (tm1637.TM1637(clk=Pin(15), dio=Pin(14))), team_a_brightness, 0)
+team_b = Team("b", (tm1637.TM1637(clk=Pin(16), dio=Pin(17))), team_b_brightness, 0)
 
 # Set display brightness
 team_a.set_brightness()
@@ -197,6 +197,7 @@ time.sleep(3)
 
 # Program main loop
 while True:
+    
     team_a.display_score()
     team_b.display_score()
     
