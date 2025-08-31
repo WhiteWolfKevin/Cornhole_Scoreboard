@@ -1,4 +1,4 @@
-                                             ┌╌ LED (GP25)
+                                              ┌╌ LED (GP25)
                                               ┆ ┏━━━━┓
                                           ┌─────┃    ┃─────┐
                       Team A Minus Button │●  ┆ ┗━━━━┛    ●│40 | VBUS
